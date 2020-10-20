@@ -1,4 +1,18 @@
 package com.sherlock.game.config;
 
-public class SherlockConfig {
+import com.sherlock.game.challenge.controller.ChallengeSocketController;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+
+@Configuration
+@EnableWebSocket
+public class SherlockConfig implements WebSocketConfigurer {
+
+    @Override
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(new ChallengeSocketController(), "/socket").setAllowedOrigins("*");
+    }
+
 }
