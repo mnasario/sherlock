@@ -1,4 +1,4 @@
-package com.sherlock.game.deployment;
+package com.sherlock.game.health.deployment;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
