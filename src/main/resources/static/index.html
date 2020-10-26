@@ -1,53 +1,125 @@
+<!DOCTYPE html>
 <html>
+
 <head>
+    <meta charset="UTF-8">
+    <title>Game Chat!</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly.min.css" rel="stylesheet"
+          type="text/css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly-additions.min.css"
+          rel="stylesheet"
+          type="text/css">
+
     <style>
-        #messages {
-            text-align: left;
-            width: 50%;
-            padding: 1em;
-            border: 1px solid black;
+        #game {
+            resize: none;
+            overflow: hidden;
+            min-height: 300px;
+            max-height: 300px;
         }
     </style>
-    <title>Sample WebSocket Client</title>
 </head>
+
 <body>
-<div class="container">
-    <div class="messages" id="messages"></div>
-    <div class="input-fields">
-        <p>Type a message and hit send:</p>
-        <input id="message"/>
-        <button id="send">Send</button>
+<nav class="navbar navbar-default navbar-pf" role="navigation">
+    <div class="navbar-header">
+        <a class="navbar-brand" href="/">
+            <p><strong>>> Game Chat!</strong></p>
+        </a>
     </div>
+</nav>
+<div class="container">
+    <br/>
+    <div class="row">
+        <input class="col-md-4" id="name" placeholder="your name" type="text">
+        <button class="col-md-1 btn btn-primary" id="connect" type="button">connect</button>
+        <br/>
+        <br/>
+    </div>
+    <div class="row">
+          <textarea class="col-md-8" id="game">
+            </textarea>
+    </div>
+    <div class="row">
+        <input class="col-md-6" id="msg" placeholder="enter your message" type="text">
+        <button class="col-md-1 btn btn-primary" disabled id="send" type="button">send</button>
+    </div>
+
 </div>
-</body>
-<script>
 
-    const messageWindow = document.getElementById("messages");
-    const sendButton = document.getElementById("send");
-    const messageInput = document.getElementById("message");
-    const socket = new WebSocket("ws://localhost:8080/socket");
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/js/patternfly.min.js"></script>
 
-    socket.onopen = function (event) {
-        addMessageToWindow("Connected");
+<script type="text/javascript">
+    var param = window.location.search; // get id from url
+    var gameId = param === "" ? 1 : param.replace("?", "");
+    var connected = false;
+    var socket;
+
+    $(document).ready(function () {
+        $("#connect").click(connect);
+        $("#send").click(sendMessage);
+
+        $("#name").keypress(function (event) {
+            if (event.keyCode == 13 || event.which == 13) {
+                connect();
+            }
+        });
+
+        $("#msg").keypress(function (event) {
+            if (event.keyCode == 13 || event.which == 13) {
+                sendMessage();
+            }
+        });
+
+        $("#game").change(function () {
+            scrollToBottom();
+        });
+
+        $("#name").focus();
+    });
+
+    var connect = function () {
+        if (!connected) {
+            var name = $("#name").val();
+            console.log("Val: " + name);
+            socket = new WebSocket("ws://" + location.host + "/game/challenge/" + gameId + "/player/" + name);
+            socket.onopen = function () {
+                connected = true;
+                console.log("Connected to the web socket");
+                $("#send").attr("disabled", false);
+                $("#connect").attr("disabled", true);
+                $("#name").attr("disabled", true);
+                $("#msg").focus();
+            };
+            socket.onmessage = function (m) {
+                console.log("Got message: " + m.data);
+                var message = JSON.parse(m.data);
+                $("#game").append(message.value + "\n");
+                scrollToBottom();
+            };
+        }
     };
 
-    socket.onmessage = function (event) {
-        addMessageToWindow(`Got Message: ${event.data}`);
+    var sendMessage = function () {
+        if (connected) {
+            var value = $("#msg").val();
+            console.log("Sending " + value);
+            var json = JSON.stringify({
+                "type": "MESSAGE",
+                "value": value
+            });
+            socket.send(json);
+            $("#msg").val("");
+        }
     };
 
-    sendButton.onclick = function (event) {
-        sendMessage(messageInput.value);
-        messageInput.value = "";
+    var scrollToBottom = function () {
+        $('#game').scrollTop($('#game')[0].scrollHeight);
     };
-
-    function sendMessage(message) {
-        socket.send(message);
-        addMessageToWindow("Sent Message: " + message);
-    }
-
-    function addMessageToWindow(message) {
-        messageWindow.innerHTML += `<div>${message}</div>`
-    }
 
 </script>
+</body>
+
 </html>

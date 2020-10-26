@@ -1,25 +1,89 @@
 package com.sherlock.game.challenge.controller;
 
-import com.sherlock.game.challenge.service.ChallengeService;
-import lombok.AllArgsConstructor;
+import com.sherlock.game.core.domain.message.Message;
+import com.sherlock.game.core.domain.message.Type;
+import com.sherlock.game.support.MessageDecoder;
+import com.sherlock.game.support.MessageEncoder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.AbstractWebSocketHandler;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
-import java.io.IOException;
+import javax.websocket.*;
+import javax.websocket.server.PathParam;
+import javax.websocket.server.ServerEndpoint;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
-@AllArgsConstructor
 @Component
-public class ChallengeSocketController extends AbstractWebSocketHandler {
+@CrossOrigin
+@ServerEndpoint(value = "/game/challenge/{gameId}/player/{player}", decoders = MessageDecoder.class, encoders = MessageEncoder.class)
+public class ChallengeSocketController {
 
-    private final ChallengeService challengeService;
+    private static Map<String, Session> gamesMap = new ConcurrentHashMap<>();
 
-    @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        log.info("New Text Message Received");
-        session.sendMessage(message);
+    @OnOpen
+    public void onOpen(Session session,
+                       @PathParam("gameId") String gameId,
+                       @PathParam("player") String player) {
+
+        String key = getKey(gameId, player);
+        gamesMap.putIfAbsent(key, session);
+        broadcast(gameId, player, player + " is online!");
+    }
+
+    @OnClose
+    public void onClose(Session session,
+                        @PathParam("gameId") String gameId,
+                        @PathParam("player") String player) {
+
+        String key = getKey(gameId, player);
+        gamesMap.remove(key);
+        broadcast(gameId, player, "Player " + player + " left");
+    }
+
+    @OnError
+    public void onError(Session session,
+                        @PathParam("gameId") String gameId,
+                        @PathParam("player") String player,
+                        Throwable throwable) {
+
+        String key = getKey(gameId, player);
+        gamesMap.remove(key);
+        log.error("onError", throwable);
+        broadcast(gameId, player, "Player " + player + " left on error: " + throwable);
+    }
+
+    @OnMessage
+    public void onMessage(Message message,
+                          Session session,
+                          @PathParam("gameId") String gameId,
+                          @PathParam("player") String player) {
+
+        log.info("Type: " + message.getType() + " - Value: " + message.getValue());
+        broadcast(gameId, player, ">> " + player + ": " + message.getValue());
+    }
+
+    private void broadcast(String gameId, String player, String message) {
+
+        gamesMap.forEach((key, session) -> {
+            if (key.startsWith(gameId)) sendMessageTo(session, player, message);
+        });
+    }
+
+    private void sendMessageTo(Session session, String player, String content) {
+
+        log.info("Session: " + session.getId() + " - Player from: " + player + " - Message: " + content);
+        Message message = new Message();
+        message.setType(Type.INFO);
+        message.setValue(content);
+        session.getAsyncRemote().sendObject(message, result -> {
+            if (result.getException() != null)
+                log.error("Unable to send message content from player " + player, result.getException());
+        });
+    }
+
+    private String getKey(@PathParam("gameId") String gameId, @PathParam("player") String player) {
+        return gameId + "_" + player;
     }
 }
