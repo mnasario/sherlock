@@ -84,7 +84,8 @@
         if (!connected) {
             var name = $("#name").val();
             console.log("Val: " + name);
-            socket = new WebSocket("wss://" + location.host + "/game/challenge/" + gameId + "/player/" + name);
+            var socketProtocol = location.protocol === "http:" ? "ws" : "wss";
+            socket = new WebSocket(socketProtocol + "://" + location.host + "/game/challenge/" + gameId + "/player/" + name);
             socket.onopen = function () {
                 connected = true;
                 console.log("Connected to the web socket");
