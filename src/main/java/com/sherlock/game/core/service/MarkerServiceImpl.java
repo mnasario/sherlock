@@ -11,15 +11,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import java.util.Random;
 import java.util.UUID;
+
+import static com.sherlock.game.support.GameHandler.RANDOM;
 
 @Service
 @Slf4j
 @AllArgsConstructor
 public class MarkerServiceImpl implements MarkerService {
-
-    private static final Random RANDOM = new Random();
 
     private final MarkerRepository markerRepository;
 
