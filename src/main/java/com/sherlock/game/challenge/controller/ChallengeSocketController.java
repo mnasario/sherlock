@@ -1,6 +1,6 @@
 package com.sherlock.game.challenge.controller;
 
-import com.sherlock.game.core.domain.message.Message;
+import com.sherlock.game.core.domain.message.Envelop;
 import com.sherlock.game.core.domain.message.Type;
 import com.sherlock.game.support.MessageDecoder;
 import com.sherlock.game.support.MessageEncoder;
@@ -55,13 +55,13 @@ public class ChallengeSocketController {
     }
 
     @OnMessage
-    public void onMessage(Message message,
+    public void onMessage(Envelop message,
                           Session session,
                           @PathParam("gameId") String gameId,
                           @PathParam("player") String player) {
 
-        log.info("Type: " + message.getType() + " - Value: " + message.getValue());
-        broadcast(gameId, player, ">> " + player + ": " + message.getValue());
+        log.info("Type: " + message.getType() + " - Value: " + message.getPayload());
+        broadcast(gameId, player, ">> " + player + ": " + message.getPayload());
     }
 
     private void broadcast(String gameId, String player, String message) {
@@ -74,9 +74,9 @@ public class ChallengeSocketController {
     private void sendMessageTo(Session session, String player, String content) {
 
         log.info("Session: " + session.getId() + " - Player from: " + player + " - Message: " + content);
-        Message message = new Message();
+        Envelop message = new Envelop();
         message.setType(Type.INFO);
-        message.setValue(content);
+        message.setPayload(content);
         session.getAsyncRemote().sendObject(message, result -> {
             if (result.getException() != null)
                 log.error("Unable to send message content from player " + player, result.getException());
