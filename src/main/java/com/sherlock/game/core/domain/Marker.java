@@ -1,5 +1,7 @@
 package com.sherlock.game.core.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,6 +19,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @TypeAlias(Marker.CLASS_NAME)
 @Document(collection = Marker.COLLECTION_NAME)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Marker {
 
     public static final String CLASS_NAME = "Marker";
