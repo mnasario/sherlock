@@ -3,8 +3,9 @@ package com.sherlock.game.core.domain.message;
 import lombok.Data;
 
 @Data
-public class Message {
+public class Envelop {
 
     private Type type;
-    private String value;
+    private Subject subject;
+    private String payload;
 }
