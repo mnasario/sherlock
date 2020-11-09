@@ -9,9 +9,10 @@ public interface ChallengeService {
 
     ChallengeRoom insert(ChallengeConfig config);
 
-    Player getPlayer(String gameId, String playerName);
+    ChallengeRoom getRoom(String gameId);
 
     ChallengeSummary getSummary(String gameId);
 
-    ChallengeRoom getRoom(String gameId);
+    Player getPlayer(String gameId, String playerName);
+
 }

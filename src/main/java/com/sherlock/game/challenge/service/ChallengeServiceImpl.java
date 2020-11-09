@@ -34,29 +34,25 @@ public class ChallengeServiceImpl implements ChallengeService {
     public ChallengeRoom insert(ChallengeConfig config) {
 
         Assert.notNull(config, "Challenge config is required");
+        Assert.notNull(config.getPlayerHost(), "Player host is required");
+        Assert.notNull(config.getTimerInSeconds(), "Time of game is required");
+        Assert.notNull(config.getMarkersAmount(), "Amount of markers is required");
         String gameId = generateRandomCode(20);
         ChallengeRoom room = ChallengeRoom.builder()
                 .gameId(gameId)
                 .gameConfig(config)
                 .build();
 
-        return challengeRoomMap.putIfAbsent(gameId, challengeRoomRepository.save(room));
+        challengeRoomMap.putIfAbsent(gameId, challengeRoomRepository.save(room));
+        return room;
     }
 
     @Override
-    public Player getPlayer(String gameId, String playerName) {
+    public ChallengeRoom getRoom(String gameId) {
 
         Assert.notNull(gameId, "Game id is required");
-        Assert.notNull(playerName, "Player name is required");
-
-        ChallengeRoom room = getRoom(gameId);
-        return Optional.ofNullable(room.getPlayers())
-                .map(players ->
-                        players.stream()
-                                .filter(p -> playerName.equalsIgnoreCase(p.getName()))
-                                .findFirst()
-                                .orElseThrow(PlayerNotFoundException::new))
-                .orElseThrow(PlayerNotFoundException::new);
+        return Optional.ofNullable(challengeRoomMap.get(gameId))
+                .orElseThrow(ChallengeRoomNotFoundException::new);
     }
 
     @Override
@@ -68,10 +64,21 @@ public class ChallengeServiceImpl implements ChallengeService {
     }
 
     @Override
-    public ChallengeRoom getRoom(String gameId) {
+    public Player getPlayer(String gameId, String playerName) {
 
         Assert.notNull(gameId, "Game id is required");
-        return Optional.ofNullable(challengeRoomMap.get(gameId))
-                .orElseThrow(ChallengeRoomNotFoundException::new);
+        Assert.notNull(playerName, "Player name is required");
+
+        ChallengeRoom room = getRoom(gameId);
+        Player playerHost = room.getGameConfig().getPlayerHost();
+        if (playerName.equalsIgnoreCase((playerHost.getName()))) return playerHost;
+
+        return Optional.ofNullable(room.getPlayers())
+                .map(players ->
+                        players.stream()
+                                .filter(p -> playerName.equalsIgnoreCase(p.getName()))
+                                .findFirst()
+                                .orElseThrow(PlayerNotFoundException::new))
+                .orElseThrow(PlayerNotFoundException::new);
     }
 }
