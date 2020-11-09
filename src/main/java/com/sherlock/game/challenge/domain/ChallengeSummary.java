@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.lang.NonNull;
 
 import java.util.SortedSet;
 
@@ -17,7 +16,7 @@ import java.util.SortedSet;
 @NoArgsConstructor
 @AllArgsConstructor
 @TypeAlias(ChallengeRoom.CLASS_NAME)
-@Document(collection = ChallengeRoom.COLLECTION_NAME)
+@Document(collection = ChallengeSummary.COLLECTION_NAME)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ChallengeSummary {
@@ -27,10 +26,6 @@ public class ChallengeSummary {
 
     @Id
     private String gameId;
-
-    @NonNull
     private ChallengeConfig gameConfig;
-
-    @NonNull
     private SortedSet<ScoreSummary> rankedList;
 }

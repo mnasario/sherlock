@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.TypeAlias;
-import org.springframework.lang.NonNull;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -24,10 +23,7 @@ public class ScoreSummary {
 
     public static final String CLASS_NAME = "ScoreSummary";
 
-    @NonNull
     private Player player;
-
-    @NonNull
     private Long totalScore;
 
     public Collection<Score> getScores() {

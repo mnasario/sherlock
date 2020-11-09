@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.lang.NonNull;
 
 import java.util.Collection;
 import java.util.Map;
@@ -33,13 +32,9 @@ public class ChallengeRoom {
     public static final String COLLECTION_NAME = "challenge-rooms";
 
     @Id
-    @NonNull
     private String gameId;
-
-    @NonNull
     private ChallengeConfig gameConfig;
 
-    @NonNull
     @JsonIgnore
     private Map<String, Player> playersMap;
 
