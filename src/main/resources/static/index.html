@@ -108,8 +108,8 @@
             var value = $("#msg").val();
             console.log("Sending " + value);
             var json = JSON.stringify({
-                "type": "MESSAGE",
-                "value": value
+                "type": "INFO",
+                "payload": value
             });
             socket.send(json);
             $("#msg").val("");
