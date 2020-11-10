@@ -8,12 +8,14 @@ import com.sherlock.game.challenge.exception.ChallengeSummaryNotFoundException;
 import com.sherlock.game.challenge.repository.ChallengeRoomRepository;
 import com.sherlock.game.challenge.repository.ChallengeSummaryRepository;
 import com.sherlock.game.core.domain.Player;
+import com.sherlock.game.core.domain.message.Envelop;
 import com.sherlock.game.core.exception.PlayerNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import javax.websocket.Session;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -80,5 +82,58 @@ public class ChallengeServiceImpl implements ChallengeService {
                                 .findFirst()
                                 .orElseThrow(PlayerNotFoundException::new))
                 .orElseThrow(PlayerNotFoundException::new);
+    }
+
+    @Override
+    public Envelop login(String gameId, Player player) {
+        //String key = getKey(gameId, player);
+        //gamesMap.putIfAbsent(key, session);
+        //broadcast(gameId, player, player + " is online!");
+        return null;
+    }
+
+    @Override
+    public Envelop processMessage(String gameId, Envelop message, String playerName) {
+
+        //log.info("Type: " + message.getType() + " - Value: " + message.getPayload());
+        //broadcast(gameId, player, ">> " + player + ": " + message.getPayload());
+
+        return null;
+    }
+
+    @Override
+    public Envelop summarize(String gameId, String playerName) {
+
+        //String key = getKey(gameId, player);
+        //gamesMap.remove(key);
+        //broadcast(gameId, player, "Player " + player + " left");
+
+        return null;
+    }
+
+    @Override
+    public Envelop processError(String gameId, String playerName, Throwable throwable) {
+
+        //String key = getKey(gameId, player);
+        //gamesMap.remove(key);
+        //log.error("onError", throwable);
+        //broadcast(gameId, player, "Player " + player + " left on error: " + throwable);
+
+        return null;
+    }
+
+    private void broadcast(String gameId, Envelop message) {
+
+        getRoom(gameId).getPlayers().forEach(player -> sendMessageTo(player, message));
+    }
+
+    private void sendMessageTo(Player player, Envelop envelop) {
+
+        Session session = player.getSession();
+        log.info("Session: " + session.getId() + " - Player from: " + player.getName() + " - Message: " + envelop.getPayload());
+        session.getAsyncRemote().sendObject(envelop, result -> {
+            if (result.getException() != null)
+                log.error("Unable to send message content from player " + player, result.getException());
+        });
     }
 }

@@ -1,9 +1,11 @@
 package com.sherlock.game.challenge.controller;
 
+import com.sherlock.game.challenge.service.ChallengeService;
+import com.sherlock.game.core.domain.Player;
 import com.sherlock.game.core.domain.message.Envelop;
-import com.sherlock.game.core.domain.message.Type;
 import com.sherlock.game.support.MessageDecoder;
 import com.sherlock.game.support.MessageEncoder;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -11,79 +13,47 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
 @CrossOrigin
+@AllArgsConstructor
 @ServerEndpoint(value = "/game/challenge/{gameId}/player/{player}", decoders = MessageDecoder.class, encoders = MessageEncoder.class)
 public class ChallengeSocketController {
 
-    private static Map<String, Session> gamesMap = new ConcurrentHashMap<>();
+    private final ChallengeService challengeService;
 
     @OnOpen
-    public void onOpen(Session session,
-                       @PathParam("gameId") String gameId,
-                       @PathParam("player") String player) {
+    public void open(Session session,
+                     @PathParam("gameId") String gameId,
+                     @PathParam("player") String player) {
 
-        String key = getKey(gameId, player);
-        gamesMap.putIfAbsent(key, session);
-        broadcast(gameId, player, player + " is online!");
-    }
-
-    @OnClose
-    public void onClose(Session session,
-                        @PathParam("gameId") String gameId,
-                        @PathParam("player") String player) {
-
-        String key = getKey(gameId, player);
-        gamesMap.remove(key);
-        broadcast(gameId, player, "Player " + player + " left");
-    }
-
-    @OnError
-    public void onError(Session session,
-                        @PathParam("gameId") String gameId,
-                        @PathParam("player") String player,
-                        Throwable throwable) {
-
-        String key = getKey(gameId, player);
-        gamesMap.remove(key);
-        log.error("onError", throwable);
-        broadcast(gameId, player, "Player " + player + " left on error: " + throwable);
+        challengeService.login(gameId,
+                Player.builder()
+                        .name(player)
+                        .session(session)
+                        .build());
     }
 
     @OnMessage
-    public void onMessage(Envelop message,
-                          Session session,
-                          @PathParam("gameId") String gameId,
-                          @PathParam("player") String player) {
+    public void processMessage(Envelop message,
+                               @PathParam("gameId") String gameId,
+                               @PathParam("player") String player) {
 
-        log.info("Type: " + message.getType() + " - Value: " + message.getPayload());
-        broadcast(gameId, player, ">> " + player + ": " + message.getPayload());
+        challengeService.processMessage(gameId, message, player);
     }
 
-    private void broadcast(String gameId, String player, String message) {
+    @OnClose
+    public void close(@PathParam("gameId") String gameId, @PathParam("player") String player) {
 
-        gamesMap.forEach((key, session) -> {
-            if (key.startsWith(gameId)) sendMessageTo(session, player, message);
-        });
+        challengeService.summarize(gameId, player);
     }
 
-    private void sendMessageTo(Session session, String player, String content) {
+    @OnError
+    public void processError(@PathParam("gameId") String gameId,
+                             @PathParam("player") String player,
+                             Throwable throwable) {
 
-        log.info("Session: " + session.getId() + " - Player from: " + player + " - Message: " + content);
-        Envelop message = new Envelop();
-        message.setType(Type.INFO);
-        message.setPayload(content);
-        session.getAsyncRemote().sendObject(message, result -> {
-            if (result.getException() != null)
-                log.error("Unable to send message content from player " + player, result.getException());
-        });
-    }
-
-    private String getKey(@PathParam("gameId") String gameId, @PathParam("player") String player) {
-        return gameId + "_" + player;
+        challengeService.processError(gameId, player, throwable);
     }
 }
