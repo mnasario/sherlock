@@ -18,7 +18,7 @@ public interface ChallengeService {
 
     Envelop login(String gameId, Player player);
 
-    Envelop processMessage(String gameId, Envelop message, String playerName);
+    Envelop processMessage(String gameId, String playerName, Envelop message);
 
     Envelop summarize(String gameId, String playerName);
 

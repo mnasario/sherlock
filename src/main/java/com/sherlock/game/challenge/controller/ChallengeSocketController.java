@@ -36,11 +36,11 @@ public class ChallengeSocketController {
     }
 
     @OnMessage
-    public void processMessage(Envelop message,
-                               @PathParam("gameId") String gameId,
-                               @PathParam("player") String player) {
+    public void processMessage(@PathParam("gameId") String gameId,
+                               @PathParam("player") String player,
+                               Envelop message) {
 
-        challengeService.processMessage(gameId, message, player);
+        challengeService.processMessage(gameId, player, message);
     }
 
     @OnClose

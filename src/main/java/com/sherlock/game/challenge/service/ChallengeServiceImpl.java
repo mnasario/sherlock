@@ -1,5 +1,7 @@
 package com.sherlock.game.challenge.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sherlock.game.challenge.domain.ChallengeConfig;
 import com.sherlock.game.challenge.domain.ChallengeRoom;
 import com.sherlock.game.challenge.domain.ChallengeSummary;
@@ -9,7 +11,10 @@ import com.sherlock.game.challenge.repository.ChallengeRoomRepository;
 import com.sherlock.game.challenge.repository.ChallengeSummaryRepository;
 import com.sherlock.game.core.domain.Player;
 import com.sherlock.game.core.domain.message.Envelop;
+import com.sherlock.game.core.domain.message.Subject;
+import com.sherlock.game.core.domain.message.Type;
 import com.sherlock.game.core.exception.PlayerNotFoundException;
+import com.sherlock.game.support.MessageProcessor;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,7 +25,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.sherlock.game.core.domain.message.Subject.GAME_FAILED;
+import static com.sherlock.game.core.domain.message.Subject.PLAYER_JOINED;
+import static com.sherlock.game.core.domain.message.Type.ERROR;
+import static com.sherlock.game.core.domain.message.Type.INFO;
 import static com.sherlock.game.support.GameHandler.generateRandomCode;
+import static java.util.Objects.isNull;
 
 @Slf4j
 @Service
@@ -28,7 +38,8 @@ import static com.sherlock.game.support.GameHandler.generateRandomCode;
 public class ChallengeServiceImpl implements ChallengeService {
 
     private static Map<String, ChallengeRoom> challengeRoomMap = new ConcurrentHashMap<>();
-
+    private final ObjectMapper mapper;
+    private final Map<Subject, MessageProcessor> messageProcessorMap;
     private final ChallengeRoomRepository challengeRoomRepository;
     private final ChallengeSummaryRepository challengeSummaryRepository;
 
@@ -43,6 +54,7 @@ public class ChallengeServiceImpl implements ChallengeService {
         ChallengeRoom room = ChallengeRoom.builder()
                 .gameId(gameId)
                 .gameConfig(config)
+                .playersMap(new ConcurrentHashMap<>())
                 .build();
 
         challengeRoomMap.putIfAbsent(gameId, challengeRoomRepository.save(room));
@@ -86,48 +98,70 @@ public class ChallengeServiceImpl implements ChallengeService {
 
     @Override
     public Envelop login(String gameId, Player player) {
-        //String key = getKey(gameId, player);
-        //gamesMap.putIfAbsent(key, session);
-        //broadcast(gameId, player, player + " is online!");
-        return null;
+
+        Assert.notNull(gameId, "Game id is required");
+        Assert.notNull(player, "Player is required");
+        Assert.notNull(player.getName(), "Player name is required");
+        Assert.notNull(player.getSession(), "Player session is required");
+
+        ChallengeRoom room = getRoom(gameId);
+        room.getPlayersMap().putIfAbsent(player.getName(), player);
+        return broadcast(gameId, createMessage(INFO, PLAYER_JOINED, room));
     }
 
     @Override
-    public Envelop processMessage(String gameId, Envelop message, String playerName) {
+    public Envelop processMessage(String gameId, String playerName, Envelop message) {
 
-        //log.info("Type: " + message.getType() + " - Value: " + message.getPayload());
-        //broadcast(gameId, player, ">> " + player + ": " + message.getPayload());
+        Assert.notNull(gameId, "Game id is required");
+        Assert.notNull(playerName, "Player name is required");
+        Assert.notNull(message, "Envelop is required");
+        Assert.notNull(message.getType(), "Envelop type is required");
+        Assert.notNull(message.getSubject(), "Envelop subject is required");
+        Assert.notNull(message.getPayload(), "Envelop content is required");
 
-        return null;
+        MessageProcessor messageProcessor = messageProcessorMap.get(message.getSubject());
+        if (isNull(messageProcessor)) {
+            String errorMessage = "Processor not implemented to subject " + message.getSubject();
+            return processError(gameId, playerName, new RuntimeException(errorMessage));
+        }
+
+        ChallengeRoom room = getRoom(gameId);
+        Player player = getPlayer(gameId, playerName);
+        return messageProcessor.process(room, player, message);
     }
 
     @Override
     public Envelop summarize(String gameId, String playerName) {
 
-        //String key = getKey(gameId, player);
-        //gamesMap.remove(key);
-        //broadcast(gameId, player, "Player " + player + " left");
+        Assert.notNull(gameId, "Game id is required");
+        Assert.notNull(playerName, "Player name is required");
 
-        return null;
+        ChallengeSummary summary = ChallengeSummary.builder().build();
+        return broadcast(gameId, createMessage(INFO, PLAYER_JOINED, summary));
     }
 
     @Override
     public Envelop processError(String gameId, String playerName, Throwable throwable) {
 
-        //String key = getKey(gameId, player);
-        //gamesMap.remove(key);
-        //log.error("onError", throwable);
-        //broadcast(gameId, player, "Player " + player + " left on error: " + throwable);
+        String errorMessage = String.format("{errorMessage: %s}", throwable.getMessage());
+        log.error(errorMessage, throwable);
 
-        return null;
+        Player player = getPlayer(gameId, playerName);
+        Envelop message = Envelop.builder()
+                .type(ERROR)
+                .subject(GAME_FAILED)
+                .payload(errorMessage)
+                .build();
+        return sendMessageTo(player, message);
     }
 
-    private void broadcast(String gameId, Envelop message) {
+    private Envelop broadcast(String gameId, Envelop message) {
 
         getRoom(gameId).getPlayers().forEach(player -> sendMessageTo(player, message));
+        return message;
     }
 
-    private void sendMessageTo(Player player, Envelop envelop) {
+    private Envelop sendMessageTo(Player player, Envelop envelop) {
 
         Session session = player.getSession();
         log.info("Session: " + session.getId() + " - Player from: " + player.getName() + " - Message: " + envelop.getPayload());
@@ -135,5 +169,30 @@ public class ChallengeServiceImpl implements ChallengeService {
             if (result.getException() != null)
                 log.error("Unable to send message content from player " + player, result.getException());
         });
+        return envelop;
     }
+
+    private <T> Envelop createMessage(Type type, Subject subject, T object) {
+
+        try {
+
+            return Envelop.builder()
+                    .type(type)
+                    .subject(subject)
+                    .payload(mapper.writeValueAsString(object))
+                    .build();
+
+        } catch (JsonProcessingException e) {
+
+            String error = "Error to convert the object to payload. " + e.getMessage();
+            log.error(error, e);
+
+            return Envelop.builder()
+                    .type(ERROR)
+                    .subject(subject)
+                    .payload(String.format("{errorMessage: %s}", error))
+                    .build();
+        }
+    }
+
 }
