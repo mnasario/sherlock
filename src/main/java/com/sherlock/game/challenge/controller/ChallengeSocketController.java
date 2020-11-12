@@ -1,14 +1,14 @@
 package com.sherlock.game.challenge.controller;
 
+import com.sherlock.game.CustomSpringConfigurator;
 import com.sherlock.game.challenge.service.ChallengeService;
 import com.sherlock.game.core.domain.Player;
 import com.sherlock.game.core.domain.message.Envelop;
 import com.sherlock.game.support.MessageDecoder;
 import com.sherlock.game.support.MessageEncoder;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
@@ -16,12 +16,17 @@ import javax.websocket.server.ServerEndpoint;
 
 @Slf4j
 @Component
-@CrossOrigin
-@AllArgsConstructor
-@ServerEndpoint(value = "/game/challenge/{gameId}/player/{player}", decoders = MessageDecoder.class, encoders = MessageEncoder.class)
+@ServerEndpoint(value = "/game/challenge/{gameId}/player/{player}",
+        decoders = MessageDecoder.class, encoders = MessageEncoder.class,
+        configurator = CustomSpringConfigurator.class)
 public class ChallengeSocketController {
 
     private final ChallengeService challengeService;
+
+    @Autowired
+    public ChallengeSocketController(ChallengeService challengeService) {
+        this.challengeService = challengeService;
+    }
 
     @OnOpen
     public void open(Session session,
