@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.sherlock.game.core.domain.ScoreSummary;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
@@ -13,6 +14,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.SortedSet;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @TypeAlias(ChallengeRoom.CLASS_NAME)
