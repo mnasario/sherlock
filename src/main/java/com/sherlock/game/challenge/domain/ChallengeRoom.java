@@ -4,11 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.sherlock.game.core.domain.Player;
+import com.sherlock.game.core.domain.message.Envelop;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -17,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.util.Collections.emptyList;
+import static java.util.Objects.nonNull;
 
 @Data
 @Builder
@@ -42,5 +45,13 @@ public class ChallengeRoom {
         return Optional.ofNullable(playersMap)
                 .map(Map::values)
                 .orElse(emptyList());
+    }
+
+    @Transient
+    @JsonIgnore
+    public Envelop broadcast(Envelop message) {
+
+        if (nonNull(getPlayers())) getPlayers().forEach(player -> player.send(message));
+        return message;
     }
 }

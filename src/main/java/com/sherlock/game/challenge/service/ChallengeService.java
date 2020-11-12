@@ -6,6 +6,8 @@ import com.sherlock.game.challenge.domain.ChallengeSummary;
 import com.sherlock.game.core.domain.Player;
 import com.sherlock.game.core.domain.message.Envelop;
 
+import javax.websocket.Session;
+
 public interface ChallengeService {
 
     ChallengeRoom insert(ChallengeConfig config);
@@ -16,11 +18,11 @@ public interface ChallengeService {
 
     Player getPlayer(String gameId, String playerName);
 
-    Envelop login(String gameId, Player player);
+    Envelop login(Session session, String gameId, String playerName);
 
-    Envelop processMessage(String gameId, String playerName, Envelop message);
+    Envelop processMessage(Session session, String gameId, String playerName, Envelop message);
 
-    Envelop summarize(String gameId, String playerName);
+    Envelop summarize(Session session, String gameId, String playerName);
 
-    Envelop processError(String gameId, String playerName, Throwable throwable);
+    Envelop processError(Session session, Throwable throwable);
 }

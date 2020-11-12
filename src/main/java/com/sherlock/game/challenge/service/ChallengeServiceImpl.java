@@ -69,6 +69,15 @@ public class ChallengeServiceImpl implements ChallengeService {
                 .orElseThrow(ChallengeRoomNotFoundException::new);
     }
 
+    private ChallengeRoom getRoom(Session session, String gameId) {
+        try {
+            return getRoom(gameId);
+        } catch (ChallengeSummaryNotFoundException e) {
+            processError(session, e);
+            throw e;
+        }
+    }
+
     @Override
     public ChallengeSummary getSummary(String gameId) {
 
@@ -96,21 +105,29 @@ public class ChallengeServiceImpl implements ChallengeService {
                 .orElseThrow(PlayerNotFoundException::new);
     }
 
-    @Override
-    public Envelop login(String gameId, Player player) {
-
-        Assert.notNull(gameId, "Game id is required");
-        Assert.notNull(player, "Player is required");
-        Assert.notNull(player.getName(), "Player name is required");
-        Assert.notNull(player.getSession(), "Player session is required");
-
-        ChallengeRoom room = getRoom(gameId);
-        room.getPlayersMap().putIfAbsent(player.getName(), player);
-        return broadcast(gameId, createMessage(INFO, PLAYER_JOINED, room));
+    private Player getPlayer(Session session, String gameId, String playerName) {
+        try {
+            return getPlayer(gameId, playerName);
+        } catch (PlayerNotFoundException e) {
+            processError(session, e);
+            throw e;
+        }
     }
 
     @Override
-    public Envelop processMessage(String gameId, String playerName, Envelop message) {
+    public Envelop login(Session session, String gameId, String playerName) {
+
+        Assert.notNull(gameId, "Game id is required");
+        Assert.notNull(playerName, "Player name is required");
+        Assert.notNull(session, "Player session is required");
+
+        ChallengeRoom room = getRoom(session, gameId);
+        room.getPlayersMap().putIfAbsent(playerName, Player.builder().name(playerName).session(session).build());
+        return room.broadcast(createMessage(INFO, PLAYER_JOINED, room));
+    }
+
+    @Override
+    public Envelop processMessage(Session session, String gameId, String playerName, Envelop message) {
 
         Assert.notNull(gameId, "Game id is required");
         Assert.notNull(playerName, "Player name is required");
@@ -122,54 +139,39 @@ public class ChallengeServiceImpl implements ChallengeService {
         MessageProcessor messageProcessor = messageProcessorMap.get(message.getSubject());
         if (isNull(messageProcessor)) {
             String errorMessage = "Processor not implemented to subject " + message.getSubject();
-            return processError(gameId, playerName, new RuntimeException(errorMessage));
+            return processError(session, new RuntimeException(errorMessage));
         }
 
-        ChallengeRoom room = getRoom(gameId);
-        Player player = getPlayer(gameId, playerName);
+        ChallengeRoom room = getRoom(session, gameId);
+        Player player = getPlayer(session, gameId, playerName);
         return messageProcessor.process(room, player, message);
     }
 
     @Override
-    public Envelop summarize(String gameId, String playerName) {
+    public Envelop summarize(Session session, String gameId, String playerName) {
 
         Assert.notNull(gameId, "Game id is required");
         Assert.notNull(playerName, "Player name is required");
 
-        ChallengeSummary summary = ChallengeSummary.builder().build();
-        return broadcast(gameId, createMessage(INFO, PLAYER_JOINED, summary));
+        //ChallengeRoom room = getRoom(session, gameId);
+        //Player player = getPlayer(session, gameId, playerName);
+        //ChallengeSummary summary = ChallengeSummary.builder().build();
+        return null;
     }
 
     @Override
-    public Envelop processError(String gameId, String playerName, Throwable throwable) {
+    public Envelop processError(Session session, Throwable throwable) {
 
-        String errorMessage = String.format("{errorMessage: %s}", throwable.getMessage());
+        String errorMessage = String.format("{'errorMessage': '%s'}", throwable.getMessage());
         log.error(errorMessage, throwable);
 
-        Player player = getPlayer(gameId, playerName);
         Envelop message = Envelop.builder()
                 .type(ERROR)
                 .subject(GAME_FAILED)
                 .payload(errorMessage)
                 .build();
-        return sendMessageTo(player, message);
-    }
-
-    private Envelop broadcast(String gameId, Envelop message) {
-
-        getRoom(gameId).getPlayers().forEach(player -> sendMessageTo(player, message));
+        session.getAsyncRemote().sendObject(message);
         return message;
-    }
-
-    private Envelop sendMessageTo(Player player, Envelop envelop) {
-
-        Session session = player.getSession();
-        log.info("Session: " + session.getId() + " - Player from: " + player.getName() + " - Message: " + envelop.getPayload());
-        session.getAsyncRemote().sendObject(envelop, result -> {
-            if (result.getException() != null)
-                log.error("Unable to send message content from player " + player, result.getException());
-        });
-        return envelop;
     }
 
     private <T> Envelop createMessage(Type type, Subject subject, T object) {

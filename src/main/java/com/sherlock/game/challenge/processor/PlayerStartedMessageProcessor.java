@@ -7,18 +7,18 @@ import com.sherlock.game.core.domain.message.Subject;
 import com.sherlock.game.support.MessageProcessor;
 import org.springframework.stereotype.Component;
 
-import static com.sherlock.game.core.domain.message.Subject.PLAYER_JOINED;
+import static com.sherlock.game.core.domain.message.Subject.PLAYER_STARTED;
 
 @Component
-public class PlayerJoinedMessageProcessor implements MessageProcessor {
+public class PlayerStartedMessageProcessor implements MessageProcessor {
 
     @Override
     public Subject getSubject() {
-        return PLAYER_JOINED;
+        return PLAYER_STARTED;
     }
 
     @Override
     public Envelop process(ChallengeRoom room, Player player, Envelop envelop) {
-        return null;
+        return room.broadcast(envelop);
     }
 }
