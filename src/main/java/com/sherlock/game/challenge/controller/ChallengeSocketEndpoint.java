@@ -19,12 +19,12 @@ import javax.websocket.server.ServerEndpoint;
 @ServerEndpoint(value = "/game/challenge/{gameId}/player/{player}",
         decoders = MessageDecoder.class, encoders = MessageEncoder.class,
         configurator = CustomSpringConfigurator.class)
-public class ChallengeSocketController {
+public class ChallengeSocketEndpoint {
 
     private final ChallengeService challengeService;
 
     @Autowired
-    public ChallengeSocketController(ChallengeService challengeService) {
+    public ChallengeSocketEndpoint(ChallengeService challengeService) {
         this.challengeService = challengeService;
     }
 
