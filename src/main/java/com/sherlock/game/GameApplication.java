@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.sherlock.game.challenge.processor.ChallengeMessageProcessor;
 import com.sherlock.game.core.domain.message.Subject;
 import com.sherlock.game.support.MessageProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,8 @@ public class GameApplication {
     }
 
     @Bean
-    public Map<Subject, MessageProcessor> getMessageProcessorMap(@Autowired List<MessageProcessor> messageProcessors) {
+    public Map<Subject, ChallengeMessageProcessor> getChallengeMessageProcessorMap(
+            @Autowired List<ChallengeMessageProcessor> messageProcessors) {
 
         return messageProcessors.stream().collect(toMap(MessageProcessor::getSubject, messageProcessor -> messageProcessor));
     }

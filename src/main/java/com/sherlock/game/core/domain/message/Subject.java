@@ -9,6 +9,6 @@ public enum Subject {
     PLAYER_PINNED,
     GAME_STARTED,
     GAME_FINISHED,
-    GAME_SUMMARIED,
+    GAME_SUMMARIZED,
     GAME_FAILED
 }

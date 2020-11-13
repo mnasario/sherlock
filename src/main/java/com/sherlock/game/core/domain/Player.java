@@ -15,6 +15,8 @@ import org.springframework.data.annotation.TypeAlias;
 import javax.websocket.Session;
 import java.util.List;
 
+import static java.util.Objects.nonNull;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -28,6 +30,7 @@ public class Player {
     public static final String CLASS_NAME = "Player";
 
     private String name;
+    private Boolean isFinishedGame;
 
     @JsonIgnore
     private List<Score> scores;
@@ -39,12 +42,32 @@ public class Player {
     @JsonIgnore
     public Envelop send(Envelop envelop) {
 
-        Session session = getSession();
-        log.info("Session: " + session.getId() + " - Player from: " + getName() + " - Message: " + envelop.getPayload());
-        session.getAsyncRemote().sendObject(envelop, result -> {
-            if (result.getException() != null)
-                log.error("Unable to send message content to player " + getName(), result.getException());
-        });
+        if (getOnline()) {
+
+            log.info("Session: " + session.getId() + " - Player from: " + getName() + " - Message: " + envelop.getPayload());
+            session.getAsyncRemote().sendObject(envelop, result -> {
+                if (result.getException() != null)
+                    log.error("Unable to send message content to player " + getName(), result.getException());
+            });
+        }
+
         return envelop;
+    }
+
+    @Transient
+    public Boolean getOnline() {
+        return nonNull(session) && session.isOpen();
+    }
+
+    @JsonIgnore
+    @Transient
+    public boolean hasFinishedGame() {
+        return nonNull(isFinishedGame) && isFinishedGame;
+    }
+
+    @JsonIgnore
+    @Transient
+    public boolean hasNotFinishedGame() {
+        return !hasFinishedGame();
     }
 }
