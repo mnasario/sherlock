@@ -110,7 +110,6 @@ public class ChallengeServiceImpl implements ChallengeService {
         Assert.notNull(message, "Envelop is required");
         Assert.notNull(message.getType(), "Envelop type is required");
         Assert.notNull(message.getSubject(), "Envelop subject is required");
-        Assert.notNull(message.getPayload(), "Envelop content is required");
 
         ChallengeRoom room = getRoom(credentials.getGameId());
         Player player = getPlayer(credentials.getGameId(), credentials.getPlayerName());
@@ -124,7 +123,7 @@ public class ChallengeServiceImpl implements ChallengeService {
         validateCredentials(credentials);
         ChallengeRoom room = getRoom(credentials.getGameId());
         Player player = getPlayer(credentials.getGameId(), credentials.getPlayerName());
-        //TODO Process the result to player here
+        //TODO Processar o resultado do jogador aqui
 
         if (player.hasNotFinishedGame()) room.broadcast(INFO, PLAYER_LEFT, player);
         if (room.isNotEnded()) return null;

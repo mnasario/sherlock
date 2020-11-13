@@ -107,8 +107,8 @@
         if (connected) {
             var value = $("#msg").val();
             console.log("Sending " + value);
-            var json = JSON.stringify(value);
-            socket.send(json);
+            //var json = JSON.stringify(value);
+            socket.send(value);
             $("#msg").val("");
         }
     };

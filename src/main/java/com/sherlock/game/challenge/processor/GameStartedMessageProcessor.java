@@ -33,6 +33,7 @@ public class GameStartedMessageProcessor implements ChallengeMessageProcessor {
         ChallengeRoom room = messageRequest.getRoom();
         ChallengeConfig gameConfig = room.getGameConfig();
         gameConfig.setMarkers(fetchRandomMarkers(gameConfig.getMarkersAmount()));
+        room.triggerGameTimeout();
         return room.broadcast(INFO, GAME_STARTED, room);
     }
 
@@ -46,4 +47,5 @@ public class GameStartedMessageProcessor implements ChallengeMessageProcessor {
         }
         return new ArrayList<>(markers.values());
     }
+
 }
