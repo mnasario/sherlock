@@ -16,7 +16,6 @@ import com.sherlock.game.core.domain.message.Envelop;
 import com.sherlock.game.core.domain.message.Subject;
 import com.sherlock.game.core.exception.MessageProcessorNotFoundException;
 import com.sherlock.game.core.exception.PlayerNotFoundException;
-import com.sherlock.game.support.MessageProcessor;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -115,7 +114,7 @@ public class ChallengeServiceImpl implements ChallengeService {
 
         ChallengeRoom room = getRoom(credentials.getGameId());
         Player player = getPlayer(credentials.getGameId(), credentials.getPlayerName());
-        MessageProcessor messageProcessor = getMessageProcessor(message);
+        ChallengeMessageProcessor messageProcessor = getMessageProcessor(message);
         return messageProcessor.process(MessageRequest.builder().room(room).player(player).envelop(message).build());
     }
 
@@ -140,7 +139,7 @@ public class ChallengeServiceImpl implements ChallengeService {
         Assert.notNull(credentials.getSession(), "Player session is required");
     }
 
-    private MessageProcessor getMessageProcessor(Envelop message) {
+    private ChallengeMessageProcessor getMessageProcessor(Envelop message) {
         return Optional.ofNullable(messageProcessorMap.get(message.getSubject()))
                 .orElseThrow(MessageProcessorNotFoundException::new);
     }
