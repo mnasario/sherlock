@@ -101,4 +101,8 @@ public class ChallengeRoom {
     public boolean isNotEnded() {
         return !isEnded();
     }
+
+    public void triggerGameTimeout() {
+        //TODO Criar mecanismo de timeout para o jogo
+    }
 }

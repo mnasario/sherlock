@@ -89,6 +89,7 @@ public class ChallengeSocketEndpoint {
                     .session(session)
                     .build();
             challengeService.summarize(credentials);
+
         } catch (Exception e) {
             pushErrorMessage(gameId, player, session, e);
             challengeService.getRoom(gameId).broadcast(INFO, PLAYER_LEFT, Player.builder().name(player).build());
@@ -102,6 +103,7 @@ public class ChallengeSocketEndpoint {
                              @PathParam("player") String player,
                              Session session,
                              Throwable throwable) {
+
         pushErrorMessage(gameId, player, session, throwable);
         challengeService.getRoom(gameId).broadcast(INFO, PLAYER_LEFT, Player.builder().name(player).build());
     }

@@ -3,7 +3,10 @@ package com.sherlock.game.core.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sherlock.game.core.domain.message.Envelop;
+import com.sherlock.game.core.domain.message.Subject;
+import com.sherlock.game.core.domain.message.Type;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +43,7 @@ public class Player {
     private Session session;
 
     @JsonIgnore
+    @Transient
     public Envelop send(Envelop envelop) {
 
         if (getOnline()) {
@@ -52,6 +56,14 @@ public class Player {
         }
 
         return envelop;
+    }
+
+    @JsonIgnore
+    @Transient
+    public <T> Envelop send(Type type, Subject subject, T payload, ObjectMapper mapper) {
+
+        Envelop message = Envelop.builder().mapper(mapper).type(type).subject(subject).build().putPayload(payload);
+        return send(message);
     }
 
     @Transient
