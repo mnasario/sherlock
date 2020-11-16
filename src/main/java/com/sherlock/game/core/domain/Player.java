@@ -16,8 +16,10 @@ import org.springframework.data.annotation.Transient;
 import org.springframework.data.annotation.TypeAlias;
 
 import javax.websocket.Session;
+import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 @Data
@@ -41,6 +43,11 @@ public class Player {
     @JsonIgnore
     @Transient
     private Session session;
+
+    @Transient
+    public Boolean getOnline() {
+        return nonNull(session) && session.isOpen();
+    }
 
     @JsonIgnore
     @Transient
@@ -66,9 +73,11 @@ public class Player {
         return send(message);
     }
 
+    @JsonIgnore
     @Transient
-    public Boolean getOnline() {
-        return nonNull(session) && session.isOpen();
+    public void addScore(Score score) {
+        if (isNull(scores)) scores = new ArrayList<>();
+        scores.add(score);
     }
 
     @JsonIgnore
