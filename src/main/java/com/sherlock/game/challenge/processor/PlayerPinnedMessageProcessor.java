@@ -4,14 +4,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sherlock.game.challenge.domain.ChallengeRoom;
 import com.sherlock.game.challenge.domain.MessageRequest;
+import com.sherlock.game.core.domain.Marker;
 import com.sherlock.game.core.domain.MarkerPin;
 import com.sherlock.game.core.domain.Player;
 import com.sherlock.game.core.domain.Score;
 import com.sherlock.game.core.domain.message.Envelop;
 import com.sherlock.game.core.domain.message.Subject;
+import com.sherlock.game.core.exception.MarkerNotFoundException;
 import com.sherlock.game.core.exception.PayloadConvertException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
+
+import java.util.Optional;
+import java.util.UUID;
 
 import static com.sherlock.game.core.domain.message.Subject.GAME_FINISHED;
 import static com.sherlock.game.core.domain.message.Subject.PLAYER_PINNED;
@@ -44,24 +50,43 @@ public class PlayerPinnedMessageProcessor implements ChallengeMessageProcessor {
         ChallengeRoom room = messageRequest.getRoom();
         Player player = messageRequest.getPlayer();
         MarkerPin markerPinned = convertToMarkerPin(messageRequest);
-        //TODO validar o payload
+        validateMarkerPinned(markerPinned);
+        Marker marker = getMarkerBy(markerPinned.getMarker().getId(), room);
+        markerPinned.setMarker(marker);
+        markerPinned.getPinned().setId(marker.getId());
 
         Score score = Score.builder()
-                .marker(markerPinned.getMarker())
+                .marker(marker)
                 .pinnedMarker(markerPinned.getPinned())
                 .distance(markerPinned.getDistance())
                 .scoreValue(getScoreByDistance(markerPinned.getDistance()))
                 .build();
 
         player.addScore(score);
-        player.setIsFinishedGame(room.getGameConfig().getMarkers().size() == player.getScores().size());
+        player.setIsFinishedGame(room.getGameConfig().getMarkersAmount() == player.getScores().size());
         if (player.hasFinishedGame()) {
-            player.send(SYSTEM, GAME_FINISHED, score, mapper);
-            return room.broadcast(SYSTEM, GAME_FINISHED, player);
+            room.broadcast(SYSTEM, GAME_FINISHED, player);
+            return player.send(SYSTEM, GAME_FINISHED, score, mapper);
         }
 
-        player.send(SYSTEM, PLAYER_PINNED, score, mapper);
-        return room.broadcast(INFO, PLAYER_PINNED, player);
+        room.broadcast(INFO, PLAYER_PINNED, player);
+        return player.send(SYSTEM, PLAYER_PINNED, score, mapper);
+    }
+
+    private Marker getMarkerBy(UUID id, ChallengeRoom room) {
+        return Optional.ofNullable(room.getGameConfig().getMarkerById(id))
+                .orElseThrow(MarkerNotFoundException::new);
+    }
+
+    private void validateMarkerPinned(MarkerPin markerPinned) {
+
+        Assert.notNull(markerPinned, "Marker pinned is required");
+        Assert.notNull(markerPinned.getMarker(), "Marker is required");
+        Assert.notNull(markerPinned.getMarker().getId(), "Marker id is required");
+        Assert.notNull(markerPinned.getPinned(), "Marker pinned is required");
+        Assert.notNull(markerPinned.getPinned().getLatitude(), "Marker pinned (lat) is required");
+        Assert.notNull(markerPinned.getPinned().getLongitude(), "Marker pinned (lng) is required");
+        Assert.notNull(markerPinned.getDistance(), "Distance is required");
     }
 
     private MarkerPin convertToMarkerPin(MessageRequest messageRequest) {
