@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,6 +24,7 @@ import static com.sherlock.game.core.domain.message.Subject.GAME_FINISHED;
 import static com.sherlock.game.core.domain.message.Subject.PLAYER_PINNED;
 import static com.sherlock.game.core.domain.message.Type.INFO;
 import static com.sherlock.game.core.domain.message.Type.SYSTEM;
+import static java.math.RoundingMode.HALF_EVEN;
 
 @Component
 @AllArgsConstructor
@@ -30,6 +32,7 @@ public class PlayerPinnedMessageProcessor implements ChallengeMessageProcessor {
 
     private static final int DISTANCE_50M = 50;
     private static final int DISTANCE_100M = 100;
+    private static final int DISTANCE_150M = 150;
     private static final int DISTANCE_200M = 200;
     private static final int DISTANCE_1000KM = 1_000;
     private static final int DISTANCE_10_000KM = 10_000;
@@ -101,20 +104,22 @@ public class PlayerPinnedMessageProcessor implements ChallengeMessageProcessor {
 
         if (distanceInMeters < DISTANCE_50M) return 100D;
         if (distanceInMeters < DISTANCE_100M) return 99D;
-        if (distanceInMeters < DISTANCE_200M) return 98D;
+        if (distanceInMeters < DISTANCE_150M) return 98D;
+        if (distanceInMeters < DISTANCE_200M) return 97D;
+        if (distanceInMeters < DISTANCE_1000KM) return 100 - getScoreBasedOnFibonacci(distanceInMeters);
 
-        double distanceInKm = distanceInMeters / 100;
-        if (distanceInKm < DISTANCE_1000KM) return 100 - getScoreBasedOnFibonacci(distanceInKm);
-        if (distanceInKm < DISTANCE_10_000KM) return 100 - getScoreBasedOn360M(distanceInKm);
-        if (distanceInKm < DISTANCE_14_500KM) return 100 - SCORE_360M_LIMIT - getScoreBasedOn450M(distanceInKm);
+        double distanceInKm = distanceInMeters / 1000;
+        if (distanceInKm < DISTANCE_10_000KM) return roundScore(100 - getScoreBasedOn360M(distanceInKm));
+        if (distanceInKm < DISTANCE_14_500KM) return roundScore(100 - getScoreBasedOn450M(distanceInKm));
 
         return 0D;
     }
 
-    private double getScoreBasedOnFibonacci(double distanceInKm) {
+    private double getScoreBasedOnFibonacci(double distanceInMeters) {
         int result = 0;
         int index = 0;
-        while (result < distanceInKm) {
+        double distance = distanceInMeters / 100;
+        while (result < distance) {
             index++;
             result = calcFibonacciRecursive(index);
         }
@@ -136,5 +141,9 @@ public class PlayerPinnedMessageProcessor implements ChallengeMessageProcessor {
         if (n == 0) return 0;
         if (n == 1) return 1;
         return calcFibonacciRecursive(n - 1) + calcFibonacciRecursive(n - 2);
+    }
+
+    private double roundScore(double score) {
+        return BigDecimal.valueOf(score).setScale(0, HALF_EVEN).doubleValue();
     }
 }
