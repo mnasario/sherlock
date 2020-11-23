@@ -76,7 +76,7 @@ public class PlayerPinnedMessageProcessorTest {
     public void shouldCalculateScoreSuccessToLess50M() throws JsonProcessingException {
 
         //given
-        Marker pinnedMarker = Marker.builder().latitude(20D).longitude(20D).build();
+        Marker pinnedMarker = Marker.builder().latitude(10D).longitude(10D).build();
         MarkerPin markerPinTo10M = buildMarkerPin(playerJose, markerA, pinnedMarker, 10D);
         markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
         requestDefault.setPlayer(playerJose);
@@ -92,5 +92,181 @@ public class PlayerPinnedMessageProcessorTest {
         Assert.assertNotNull(playerJose.getScores());
         Assert.assertFalse(playerJose.getScores().isEmpty());
         Assert.assertEquals(1, playerJose.getScores().size());
+    }
+
+    @Test
+    public void shouldCalculateScoreSuccessToBetween50MAnd100M() throws JsonProcessingException {
+
+        //given
+        Marker pinnedMarker = Marker.builder().latitude(80D).longitude(80D).build();
+        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 80D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        requestDefault.setPlayer(playerHost);
+
+        //when
+        Envelop messageResponse = processor.process(requestDefault);
+
+        //then
+        Score scoreResponse = mapper.readValue(messageResponse.getPayload(), Score.class);
+        Assert.assertNotNull(scoreResponse);
+        Assert.assertEquals(Double.valueOf(99), scoreResponse.getScoreValue());
+        Assert.assertFalse(playerHost.hasFinishedGame());
+        Assert.assertNotNull(playerHost.getScores());
+        Assert.assertFalse(playerHost.getScores().isEmpty());
+        Assert.assertEquals(1, playerHost.getScores().size());
+    }
+
+    @Test
+    public void shouldCalculateScoreSuccessToBetween100MAnd150M() throws JsonProcessingException {
+
+        //given
+        Marker pinnedMarker = Marker.builder().latitude(130D).longitude(130D).build();
+        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 130D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        requestDefault.setPlayer(playerHost);
+
+        //when
+        Envelop messageResponse = processor.process(requestDefault);
+
+        //then
+        Score scoreResponse = mapper.readValue(messageResponse.getPayload(), Score.class);
+        Assert.assertNotNull(scoreResponse);
+        Assert.assertEquals(Double.valueOf(98), scoreResponse.getScoreValue());
+        Assert.assertFalse(playerHost.hasFinishedGame());
+        Assert.assertNotNull(playerHost.getScores());
+        Assert.assertFalse(playerHost.getScores().isEmpty());
+        Assert.assertEquals(1, playerHost.getScores().size());
+    }
+
+    @Test
+    public void shouldCalculateScoreSuccessToBetween150MAnd200M() throws JsonProcessingException {
+
+        //given
+        Marker pinnedMarker = Marker.builder().latitude(170D).longitude(170D).build();
+        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 170D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        requestDefault.setPlayer(playerHost);
+
+        //when
+        Envelop messageResponse = processor.process(requestDefault);
+
+        //then
+        Score scoreResponse = mapper.readValue(messageResponse.getPayload(), Score.class);
+        Assert.assertNotNull(scoreResponse);
+        Assert.assertEquals(Double.valueOf(97), scoreResponse.getScoreValue());
+        Assert.assertFalse(playerHost.hasFinishedGame());
+        Assert.assertNotNull(playerHost.getScores());
+        Assert.assertFalse(playerHost.getScores().isEmpty());
+        Assert.assertEquals(1, playerHost.getScores().size());
+    }
+
+    @Test
+    public void shouldCalculateScoreSuccessToBetween200MAnd300M() throws JsonProcessingException {
+
+        //given
+        Marker pinnedMarker = Marker.builder().latitude(250D).longitude(250D).build();
+        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 250D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        requestDefault.setPlayer(playerHost);
+
+        //when
+        Envelop messageResponse = processor.process(requestDefault);
+
+        //then
+        Score scoreResponse = mapper.readValue(messageResponse.getPayload(), Score.class);
+        Assert.assertNotNull(scoreResponse);
+        Assert.assertEquals(Double.valueOf(96), scoreResponse.getScoreValue());
+        Assert.assertFalse(playerHost.hasFinishedGame());
+        Assert.assertNotNull(playerHost.getScores());
+        Assert.assertFalse(playerHost.getScores().isEmpty());
+        Assert.assertEquals(1, playerHost.getScores().size());
+    }
+
+    @Test
+    public void shouldCalculateScoreSuccessToBetween5500MAnd8900M() throws JsonProcessingException {
+
+        //given
+        Marker pinnedMarker = Marker.builder().latitude(6900D).longitude(6900D).build();
+        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 6900D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        requestDefault.setPlayer(playerHost);
+
+        //when
+        Envelop messageResponse = processor.process(requestDefault);
+
+        //then
+        Score scoreResponse = mapper.readValue(messageResponse.getPayload(), Score.class);
+        Assert.assertNotNull(scoreResponse);
+        Assert.assertEquals(Double.valueOf(89), scoreResponse.getScoreValue());
+        Assert.assertFalse(playerHost.hasFinishedGame());
+        Assert.assertNotNull(playerHost.getScores());
+        Assert.assertFalse(playerHost.getScores().isEmpty());
+        Assert.assertEquals(1, playerHost.getScores().size());
+    }
+
+    @Test
+    public void shouldCalculateScoreSuccessToBetween1000KMAnd10000KM() throws JsonProcessingException {
+
+        //given
+        Marker pinnedMarker = Marker.builder().latitude(5_000_000D).longitude(5_000_000D).build();
+        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 5_000_000D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        requestDefault.setPlayer(playerHost);
+
+        //when
+        Envelop messageResponse = processor.process(requestDefault);
+
+        //then
+        Score scoreResponse = mapper.readValue(messageResponse.getPayload(), Score.class);
+        Assert.assertNotNull(scoreResponse);
+        Assert.assertEquals(Double.valueOf(58), scoreResponse.getScoreValue());
+        Assert.assertFalse(playerHost.hasFinishedGame());
+        Assert.assertNotNull(playerHost.getScores());
+        Assert.assertFalse(playerHost.getScores().isEmpty());
+        Assert.assertEquals(1, playerHost.getScores().size());
+    }
+
+    @Test
+    public void shouldCalculateScoreSuccessToBetween10000KMAnd14500KM() throws JsonProcessingException {
+
+        //given
+        Marker pinnedMarker = Marker.builder().latitude(12_000_000D).longitude(12_000_000D).build();
+        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 12_000_000D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        requestDefault.setPlayer(playerHost);
+
+        //when
+        Envelop messageResponse = processor.process(requestDefault);
+
+        //then
+        Score scoreResponse = mapper.readValue(messageResponse.getPayload(), Score.class);
+        Assert.assertNotNull(scoreResponse);
+        Assert.assertEquals(Double.valueOf(17), scoreResponse.getScoreValue());
+        Assert.assertFalse(playerHost.hasFinishedGame());
+        Assert.assertNotNull(playerHost.getScores());
+        Assert.assertFalse(playerHost.getScores().isEmpty());
+        Assert.assertEquals(1, playerHost.getScores().size());
+    }
+
+    @Test
+    public void shouldCalculateScoreSuccessToMoreThan14500KM() throws JsonProcessingException {
+
+        //given
+        Marker pinnedMarker = Marker.builder().latitude(14_600_000D).longitude(14_600_000D).build();
+        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 14_600_000D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        requestDefault.setPlayer(playerHost);
+
+        //when
+        Envelop messageResponse = processor.process(requestDefault);
+
+        //then
+        Score scoreResponse = mapper.readValue(messageResponse.getPayload(), Score.class);
+        Assert.assertNotNull(scoreResponse);
+        Assert.assertEquals(Double.valueOf(0), scoreResponse.getScoreValue());
+        Assert.assertFalse(playerHost.hasFinishedGame());
+        Assert.assertNotNull(playerHost.getScores());
+        Assert.assertFalse(playerHost.getScores().isEmpty());
+        Assert.assertEquals(1, playerHost.getScores().size());
     }
 }
