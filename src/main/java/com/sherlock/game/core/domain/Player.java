@@ -35,7 +35,7 @@ public class Player {
     public static final String CLASS_NAME = "Player";
 
     private String name;
-    private Boolean isFinishedGame;
+    private Boolean finishedGame;
 
     @JsonIgnore
     private List<Score> scores;
@@ -83,7 +83,7 @@ public class Player {
     @JsonIgnore
     @Transient
     public boolean hasFinishedGame() {
-        return nonNull(isFinishedGame) && isFinishedGame;
+        return nonNull(finishedGame) && finishedGame;
     }
 
     @JsonIgnore

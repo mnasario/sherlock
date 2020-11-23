@@ -18,7 +18,7 @@ import static com.sherlock.game.core.domain.message.Type.INFO;
 
 @Component
 @AllArgsConstructor
-public class GameStartedMessageProcessor implements ChallengeMessageProcessor {
+public class PlayerStartedMessageProcessor implements ChallengeMessageProcessor {
 
     private final MarkerService markerService;
 

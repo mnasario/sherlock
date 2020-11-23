@@ -15,6 +15,7 @@ import com.sherlock.game.core.exception.PayloadConvertException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -56,17 +57,17 @@ public class PlayerPinnedMessageProcessor implements ChallengeMessageProcessor {
         validateMarkerPinned(markerPinned);
         Marker marker = getMarkerBy(markerPinned.getMarker().getId(), room);
         markerPinned.setMarker(marker);
-        markerPinned.getPinned().setId(marker.getId());
+        markerPinned.getPinnedMarker().setId(marker.getId());
 
         Score score = Score.builder()
                 .marker(marker)
-                .pinnedMarker(markerPinned.getPinned())
+                .pinnedMarker(markerPinned.getPinnedMarker())
                 .distance(markerPinned.getDistance())
                 .scoreValue(getScoreByDistance(markerPinned.getDistance()))
                 .build();
 
         player.addScore(score);
-        player.setIsFinishedGame(room.getGameConfig().getMarkersAmount() == player.getScores().size());
+        player.setFinishedGame(room.getGameConfig().getMarkersAmount() == player.getScores().size());
         if (player.hasFinishedGame()) {
             room.broadcast(SYSTEM, GAME_FINISHED, player);
             return player.send(SYSTEM, GAME_FINISHED, score, mapper);
@@ -86,15 +87,16 @@ public class PlayerPinnedMessageProcessor implements ChallengeMessageProcessor {
         Assert.notNull(markerPinned, "Marker pinned is required");
         Assert.notNull(markerPinned.getMarker(), "Marker is required");
         Assert.notNull(markerPinned.getMarker().getId(), "Marker id is required");
-        Assert.notNull(markerPinned.getPinned(), "Marker pinned is required");
-        Assert.notNull(markerPinned.getPinned().getLatitude(), "Marker pinned (lat) is required");
-        Assert.notNull(markerPinned.getPinned().getLongitude(), "Marker pinned (lng) is required");
+        Assert.notNull(markerPinned.getPinnedMarker(), "Marker pinned is required");
+        Assert.notNull(markerPinned.getPinnedMarker().getLatitude(), "Marker pinned (lat) is required");
+        Assert.notNull(markerPinned.getPinnedMarker().getLongitude(), "Marker pinned (lng) is required");
         Assert.notNull(markerPinned.getDistance(), "Distance is required");
     }
 
     private MarkerPin convertToMarkerPin(MessageRequest messageRequest) {
         try {
-            return mapper.readValue(messageRequest.getEnvelop().getPayload(), MarkerPin.class);
+            String payload = StringUtils.replace(messageRequest.getEnvelop().getPayload(), "'", "\"");
+            return mapper.readValue(payload, MarkerPin.class);
         } catch (JsonProcessingException e) {
             throw new PayloadConvertException("Error to convert payload to MarkerPinned", e);
         }
