@@ -21,8 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import javax.annotation.PostConstruct;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.sherlock.game.core.domain.message.Subject.GAME_SUMMARIZED;
@@ -35,7 +38,7 @@ import static com.sherlock.game.support.GameHandler.generateRandomCode;
 @AllArgsConstructor
 public class ChallengeServiceImpl implements ChallengeService {
 
-    private static Map<String, ChallengeRoom> challengeRoomMap = new ConcurrentHashMap<>();
+    private static final Map<String, ChallengeRoom> challengeRoomMap = new ConcurrentHashMap<>();
     private final ObjectMapper mapper;
     private final Map<Subject, ChallengeMessageProcessor> messageProcessorMap;
     private final ChallengeRoomRepository challengeRoomRepository;
@@ -128,6 +131,18 @@ public class ChallengeServiceImpl implements ChallengeService {
         return messageProcessor.process(MessageRequest.builder().room(room).player(player).build());
     }
 
+    @PostConstruct
+    public void scheduleGameCleaner() {
+        final int period = 60 * 60 * 1000;
+        log.debug("Schedule the game cleaner for each intervals of {} millis", period);
+        TimerTask task = new TimerTask() {
+            public void run() {
+                triggerGameCleaner();
+            }
+        };
+        new Timer().scheduleAtFixedRate(task, 0, period);
+    }
+
     private void validateCredentials(Credentials credentials) {
 
         Assert.notNull(credentials, "Credentials is required");
@@ -140,5 +155,17 @@ public class ChallengeServiceImpl implements ChallengeService {
     private ChallengeMessageProcessor getMessageProcessor(Subject subject) {
         return Optional.ofNullable(messageProcessorMap.get(subject))
                 .orElseThrow(MessageProcessorNotFoundException::new);
+    }
+
+    private void triggerGameCleaner() {
+        log.info("Starting to clean the game challenge cache");
+        challengeRoomMap.forEach((gameId, room) -> {
+            if (room.hasFinished()) {
+                log.debug("Game Id {} has finished and it will be removed from cache", gameId);
+                challengeRoomRepository.save(room);
+                challengeRoomMap.remove(gameId);
+            }
+        });
+        log.info("Process to clean the game challenge cache has finished");
     }
 }
