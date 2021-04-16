@@ -17,7 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/challenge")
 public class ChallengeRestController {
 
-    private ChallengeService challengeService;
+    private final ChallengeService challengeService;
 
     @CrossOrigin
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)

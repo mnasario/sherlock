@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sherlock.game.challenge.exception.ChallengeRoomNotAvailableException;
 import com.sherlock.game.core.domain.Credentials;
 import com.sherlock.game.core.domain.Player;
+import com.sherlock.game.core.domain.ScoreSummary;
 import com.sherlock.game.core.domain.message.Envelop;
 import com.sherlock.game.core.domain.message.Subject;
 import com.sherlock.game.core.domain.message.Type;
@@ -14,19 +15,22 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.websocket.Session;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
+import java.io.IOException;
+import java.util.*;
 
+import static com.sherlock.game.core.domain.message.Subject.GAME_FINISHED;
+import static com.sherlock.game.core.domain.message.Type.INFO;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
 
+@Slf4j
 @Data
 @Builder
 @NoArgsConstructor
@@ -43,8 +47,8 @@ public class ChallengeRoom {
     @Id
     private String gameId;
     private ChallengeConfig gameConfig;
-    private Boolean isStarted;
-    private Boolean isFinished;
+    private Boolean started;
+    private Boolean finished;
 
     @JsonIgnore
     @Transient
@@ -53,10 +57,20 @@ public class ChallengeRoom {
     @JsonIgnore
     private Map<String, Player> playersMap;
 
+    @JsonIgnore
+    @Transient
+    private ChallengeSummary summary;
+
     public Collection<Player> getPlayers() {
         return Optional.ofNullable(playersMap)
                 .map(Map::values)
                 .orElse(emptyList());
+    }
+
+    @Transient
+    @JsonIgnore
+    public Envelop broadcast(Type type, Subject subject) {
+        return broadcast(type, subject, null);
     }
 
     @Transient
@@ -86,23 +100,48 @@ public class ChallengeRoom {
     @Transient
     @JsonIgnore
     public boolean isAvailable() {
-        if (nonNull(isStarted) && isStarted) throw new ChallengeRoomNotAvailableException();
+        if (nonNull(started) && started) throw new ChallengeRoomNotAvailableException();
         return true;
     }
 
     @Transient
     @JsonIgnore
-    public boolean isEnded() {
-        return nonNull(isFinished) && getIsFinished();
+    public boolean hasFinished() {
+        return nonNull(finished) && finished;
     }
 
     @Transient
     @JsonIgnore
-    public boolean isNotEnded() {
-        return !isEnded();
+    public boolean hasNotFinished() {
+        return !hasFinished();
     }
 
-    public void triggerGameTimeout() {
+    @Transient
+    @JsonIgnore
+    public ChallengeSummary getSummary() {
+
+        return Optional.ofNullable(summary).orElse(
+                ChallengeSummary.builder()
+                        .gameId(gameId)
+                        .gameConfig(gameConfig)
+                        .rankedList(new TreeSet<>(Comparator.comparing(ScoreSummary::getTotalScore)))
+                        .build());
+    }
+
+    public void triggerTimer() {
         //TODO Criar mecanismo de timeout para o jogo
+    }
+
+    public void triggerTimeout() {
+
+        broadcast(INFO, GAME_FINISHED);
+        setFinished(true);
+        getPlayers().forEach(player -> {
+            try {
+                player.getSession().close();
+            } catch (IOException e) {
+                log.error("Error to finish session to user: " + player.getName(), e);
+            }
+        });
     }
 }

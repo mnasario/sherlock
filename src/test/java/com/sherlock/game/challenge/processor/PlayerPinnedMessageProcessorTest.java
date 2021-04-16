@@ -28,23 +28,20 @@ import static com.sherlock.game.support.GameModelFactory.*;
 @RunWith(MockitoJUnitRunner.class)
 public class PlayerPinnedMessageProcessorTest {
 
+    private final ObjectMapper mapper = buildMapper();
+    private final PlayerPinnedMessageProcessor processor = new PlayerPinnedMessageProcessor(mapper);
+    private final String gameId = "GAME_1";
     @Mock
     private Session sessionJoao;
-
     @Mock
     private Session sessionJose;
-
-    private ObjectMapper mapper = buildMapper();
-    private PlayerPinnedMessageProcessor processor = new PlayerPinnedMessageProcessor(mapper);
-
-    private Player playerHost;
-    private Player playerJose;
-    private String gameId = "GAME_1";
-    private Marker markerA;
-    private Marker markerB;
     private ChallengeConfig configDefault;
     private Map<String, Player> playersMap;
     private ChallengeRoom room;
+    private Player playerHost;
+    private Player playerJose;
+    private Marker markerA;
+    private Marker markerB;
     private Envelop markerPinnedMessage;
     private MessageRequest requestDefault;
 
@@ -99,8 +96,8 @@ public class PlayerPinnedMessageProcessorTest {
 
         //given
         Marker pinnedMarker = Marker.builder().latitude(80D).longitude(80D).build();
-        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 80D);
-        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        MarkerPin markerPinTo80M = buildMarkerPin(playerHost, markerB, pinnedMarker, 80D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo80M));
         requestDefault.setPlayer(playerHost);
 
         //when
@@ -121,8 +118,8 @@ public class PlayerPinnedMessageProcessorTest {
 
         //given
         Marker pinnedMarker = Marker.builder().latitude(130D).longitude(130D).build();
-        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 130D);
-        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        MarkerPin markerPinTo130M = buildMarkerPin(playerHost, markerB, pinnedMarker, 130D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo130M));
         requestDefault.setPlayer(playerHost);
 
         //when
@@ -143,8 +140,8 @@ public class PlayerPinnedMessageProcessorTest {
 
         //given
         Marker pinnedMarker = Marker.builder().latitude(170D).longitude(170D).build();
-        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 170D);
-        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        MarkerPin markerPinTo170M = buildMarkerPin(playerHost, markerB, pinnedMarker, 170D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo170M));
         requestDefault.setPlayer(playerHost);
 
         //when
@@ -165,8 +162,8 @@ public class PlayerPinnedMessageProcessorTest {
 
         //given
         Marker pinnedMarker = Marker.builder().latitude(250D).longitude(250D).build();
-        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 250D);
-        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        MarkerPin markerPinTo250M = buildMarkerPin(playerHost, markerB, pinnedMarker, 250D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo250M));
         requestDefault.setPlayer(playerHost);
 
         //when
@@ -187,8 +184,8 @@ public class PlayerPinnedMessageProcessorTest {
 
         //given
         Marker pinnedMarker = Marker.builder().latitude(6900D).longitude(6900D).build();
-        MarkerPin markerPinTo10M = buildMarkerPin(playerHost, markerB, pinnedMarker, 6900D);
-        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo10M));
+        MarkerPin markerPinTo6900M = buildMarkerPin(playerHost, markerB, pinnedMarker, 6900D);
+        markerPinnedMessage.setPayload(mapper.writeValueAsString(markerPinTo6900M));
         requestDefault.setPlayer(playerHost);
 
         //when
@@ -197,7 +194,7 @@ public class PlayerPinnedMessageProcessorTest {
         //then
         Score scoreResponse = mapper.readValue(messageResponse.getPayload(), Score.class);
         Assert.assertNotNull(scoreResponse);
-        Assert.assertEquals(Double.valueOf(89), scoreResponse.getScoreValue());
+        Assert.assertEquals(Double.valueOf(86), scoreResponse.getScoreValue());
         Assert.assertFalse(playerHost.hasFinishedGame());
         Assert.assertNotNull(playerHost.getScores());
         Assert.assertFalse(playerHost.getScores().isEmpty());

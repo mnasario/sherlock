@@ -13,6 +13,6 @@ public class MarkerPin {
 
     private Player player;
     private Marker marker;
-    private Marker pinnedMarker;
+    private Marker pinned;
     private Double distance;
 }
