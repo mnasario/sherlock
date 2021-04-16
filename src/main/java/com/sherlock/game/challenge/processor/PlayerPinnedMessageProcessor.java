@@ -57,11 +57,11 @@ public class PlayerPinnedMessageProcessor implements ChallengeMessageProcessor {
         validateMarkerPinned(markerPinned);
         Marker marker = getMarkerBy(markerPinned.getMarker().getId(), room);
         markerPinned.setMarker(marker);
-        markerPinned.getPinnedMarker().setId(marker.getId());
+        markerPinned.getPinned().setId(marker.getId());
 
         Score score = Score.builder()
                 .marker(marker)
-                .pinnedMarker(markerPinned.getPinnedMarker())
+                .pinnedMarker(markerPinned.getPinned())
                 .distance(markerPinned.getDistance())
                 .scoreValue(getScoreByDistance(markerPinned.getDistance()))
                 .build();
@@ -87,9 +87,9 @@ public class PlayerPinnedMessageProcessor implements ChallengeMessageProcessor {
         Assert.notNull(markerPinned, "Marker pinned is required");
         Assert.notNull(markerPinned.getMarker(), "Marker is required");
         Assert.notNull(markerPinned.getMarker().getId(), "Marker id is required");
-        Assert.notNull(markerPinned.getPinnedMarker(), "Marker pinned is required");
-        Assert.notNull(markerPinned.getPinnedMarker().getLatitude(), "Marker pinned (lat) is required");
-        Assert.notNull(markerPinned.getPinnedMarker().getLongitude(), "Marker pinned (lng) is required");
+        Assert.notNull(markerPinned.getPinned(), "Marker pinned is required");
+        Assert.notNull(markerPinned.getPinned().getLatitude(), "Marker pinned (lat) is required");
+        Assert.notNull(markerPinned.getPinned().getLongitude(), "Marker pinned (lng) is required");
         Assert.notNull(markerPinned.getDistance(), "Distance is required");
     }
 
