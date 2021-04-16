@@ -129,15 +129,26 @@ public class ChallengeRoom {
     }
 
     public void triggerTimer() {
-        //TODO Criar mecanismo de timeout para o jogo
+        log.debug("Game Id {} has started", gameId);
+
+        TimerTask task = new TimerTask() {
+            public void run() {
+                triggerTimeout();
+            }
+        };
+        Timer timer = new Timer("Timer-" + gameId);
+        long delay = getGameConfig().getTimerInSeconds() * 1000L;
+        timer.schedule(task, delay);
     }
 
     public void triggerTimeout() {
+        log.debug("Game Id {} has finished", gameId);
 
         broadcast(INFO, GAME_FINISHED);
         setFinished(true);
         getPlayers().forEach(player -> {
             try {
+                log.trace("Closing session to player {}", player.getName());
                 player.getSession().close();
             } catch (IOException e) {
                 log.error("Error to finish session to user: " + player.getName(), e);
