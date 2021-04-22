@@ -91,4 +91,10 @@ public class Player {
     public boolean hasNotFinishedGame() {
         return !hasFinishedGame();
     }
+
+    @JsonIgnore
+    @Transient
+    public boolean isEqualName(String name) {
+        return nonNull(this.name) && this.name.equalsIgnoreCase(name);
+    }
 }
