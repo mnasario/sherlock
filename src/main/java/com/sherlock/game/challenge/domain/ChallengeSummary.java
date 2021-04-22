@@ -20,7 +20,7 @@ import java.util.SortedSet;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TypeAlias(ChallengeRoom.CLASS_NAME)
+@TypeAlias(ChallengeSummary.CLASS_NAME)
 @Document(collection = ChallengeSummary.COLLECTION_NAME)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
