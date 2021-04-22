@@ -91,8 +91,8 @@ public class ChallengeRoom {
     @Transient
     @JsonIgnore
     public ChallengeRoom addPlayerToRoom(Credentials credentials) {
-        Session session = credentials.getSession();
         String playerName = credentials.getPlayerName();
+        Session session = credentials.getSession();
         getPlayersMap().putIfAbsent(playerName, Player.builder().name(playerName).session(session).build());
         return this;
     }
@@ -100,9 +100,22 @@ public class ChallengeRoom {
     @Transient
     @JsonIgnore
     public boolean isAvailable() {
-        if (nonNull(started) && started) throw new ChallengeRoomNotAvailableException();
-        return true;
+        if (hasNotStarted()) return true;
+        throw new ChallengeRoomNotAvailableException();
     }
+
+    @Transient
+    @JsonIgnore
+    public boolean hasStarted() {
+        return nonNull(started) && started;
+    }
+
+    @Transient
+    @JsonIgnore
+    public boolean hasNotStarted() {
+        return !hasStarted();
+    }
+
 
     @Transient
     @JsonIgnore

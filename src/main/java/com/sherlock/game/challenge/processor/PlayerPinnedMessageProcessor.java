@@ -56,8 +56,6 @@ public class PlayerPinnedMessageProcessor implements ChallengeMessageProcessor {
         MarkerPin markerPinned = convertToMarkerPin(messageRequest);
         validateMarkerPinned(markerPinned);
         Marker marker = getMarkerBy(markerPinned.getMarker().getId(), room);
-        markerPinned.setMarker(marker);
-        markerPinned.getPinned().setId(marker.getId());
 
         Score score = Score.builder()
                 .marker(marker)

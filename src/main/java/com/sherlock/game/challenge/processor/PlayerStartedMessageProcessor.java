@@ -34,6 +34,7 @@ public class PlayerStartedMessageProcessor implements ChallengeMessageProcessor 
         ChallengeConfig gameConfig = room.getGameConfig();
         gameConfig.setMarkers(fetchRandomMarkers(gameConfig.getMarkersAmount()));
         room.triggerTimer();
+        room.setStarted(true);
         return room.broadcast(INFO, GAME_STARTED, room);
     }
 

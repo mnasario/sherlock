@@ -7,6 +7,7 @@ import com.sherlock.game.challenge.domain.ChallengeSummary;
 import com.sherlock.game.challenge.domain.MessageRequest;
 import com.sherlock.game.challenge.exception.ChallengeRoomNotFoundException;
 import com.sherlock.game.challenge.exception.ChallengeSummaryNotFoundException;
+import com.sherlock.game.challenge.exception.PlayerLoginConflictException;
 import com.sherlock.game.challenge.processor.ChallengeMessageProcessor;
 import com.sherlock.game.challenge.repository.ChallengeRoomRepository;
 import com.sherlock.game.challenge.repository.ChallengeSummaryRepository;
@@ -32,6 +33,8 @@ import static com.sherlock.game.core.domain.message.Subject.GAME_SUMMARIZED;
 import static com.sherlock.game.core.domain.message.Subject.PLAYER_JOINED;
 import static com.sherlock.game.core.domain.message.Type.INFO;
 import static com.sherlock.game.support.GameHandler.generateRandomCode;
+import static com.sherlock.game.support.GameMessageLog.messageTo;
+import static java.util.Objects.nonNull;
 
 @Slf4j
 @Service
@@ -87,21 +90,16 @@ public class ChallengeServiceImpl implements ChallengeService {
 
         ChallengeRoom room = getRoom(gameId);
         Player playerHost = room.getGameConfig().getPlayerHost();
-        if (playerName.equalsIgnoreCase((playerHost.getName()))) return playerHost;
+        if (room.hasNotStarted() && playerHost.isEqualName(playerName)) return playerHost;
 
-        return Optional.ofNullable(room.getPlayers())
-                .map(players ->
-                        players.stream()
-                                .filter(p -> playerName.equalsIgnoreCase(p.getName()))
-                                .findFirst()
-                                .orElseThrow(PlayerNotFoundException::new))
+        return Optional.ofNullable(room.getPlayersMap().get(playerName))
                 .orElseThrow(PlayerNotFoundException::new);
     }
 
     @Override
     public Envelop login(Credentials credentials) {
 
-        validateCredentials(credentials);
+        validateLogin(credentials);
         ChallengeRoom room = getRoom(credentials.getGameId());
         if (room.isAvailable()) room.addPlayerToRoom(credentials);
         return room.broadcast(INFO, PLAYER_JOINED, room);
@@ -150,6 +148,16 @@ public class ChallengeServiceImpl implements ChallengeService {
         Assert.notNull(credentials.getPlayerName(), "Player name is required");
         Assert.notNull(credentials.getSession(), "Player session is required");
         Assert.isTrue(credentials.getPlayerName().matches("^[\\w\\-_\\s]+$"), "Player name should be alphanumeric");
+    }
+
+    private void validateLogin(Credentials credentials) {
+        validateCredentials(credentials);
+        String sessionId = credentials.getSession().getId();
+        String gameId = credentials.getGameId();
+        String playerName = credentials.getPlayerName();
+        Player player = getRoom(gameId).getPlayersMap().get(playerName);
+        if (nonNull(player) && nonNull(player.getSession())) throw new PlayerLoginConflictException();
+        log.trace(messageTo("Login valid. "), sessionId, gameId, playerName);
     }
 
     private ChallengeMessageProcessor getMessageProcessor(Subject subject) {
