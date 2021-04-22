@@ -27,6 +27,7 @@ import java.util.*;
 
 import static com.sherlock.game.core.domain.message.Subject.GAME_FINISHED;
 import static com.sherlock.game.core.domain.message.Type.INFO;
+import static com.sherlock.game.support.GameMessageLog.messageTo;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
 
@@ -67,35 +68,6 @@ public class ChallengeRoom {
                 .orElse(emptyList());
     }
 
-    @Transient
-    @JsonIgnore
-    public Envelop broadcast(Type type, Subject subject) {
-        return broadcast(type, subject, null);
-    }
-
-    @Transient
-    @JsonIgnore
-    public <T> Envelop broadcast(Type type, Subject subject, T payload) {
-
-        Envelop message = Envelop.builder()
-                .mapper(mapper)
-                .type(type)
-                .subject(subject)
-                .build()
-                .putPayload(payload);
-
-        if (nonNull(getPlayers())) getPlayers().forEach(player -> player.send(message));
-        return message;
-    }
-
-    @Transient
-    @JsonIgnore
-    public ChallengeRoom addPlayerToRoom(Credentials credentials) {
-        String playerName = credentials.getPlayerName();
-        Session session = credentials.getSession();
-        getPlayersMap().putIfAbsent(playerName, Player.builder().name(playerName).session(session).build());
-        return this;
-    }
 
     @Transient
     @JsonIgnore
@@ -127,6 +99,36 @@ public class ChallengeRoom {
     @JsonIgnore
     public boolean hasNotFinished() {
         return !hasFinished();
+    }
+
+    @Transient
+    @JsonIgnore
+    public void broadcast(Type type, Subject subject) {
+        broadcast(type, subject, null);
+    }
+
+    @Transient
+    @JsonIgnore
+    public <T> Envelop broadcast(Type type, Subject subject, T payload) {
+
+        Envelop message = Envelop.builder()
+                .mapper(mapper)
+                .type(type)
+                .subject(subject)
+                .build()
+                .putPayload(payload);
+
+        if (nonNull(getPlayers())) getPlayers().forEach(player -> player.send(message));
+        return message;
+    }
+
+    @Transient
+    @JsonIgnore
+    public void addPlayerToRoom(Credentials credentials) {
+        String playerName = credentials.getPlayerName();
+        Session session = credentials.getSession();
+        getPlayersMap().putIfAbsent(playerName, Player.builder().name(playerName).session(session).build());
+        log.debug(messageTo("Player has logged."), session.getId(), credentials.getGameId(), playerName);
     }
 
     @Transient

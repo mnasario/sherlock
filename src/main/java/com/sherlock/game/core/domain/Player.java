@@ -55,9 +55,9 @@ public class Player {
 
         if (getOnline()) {
 
-            log.info("Session: " + session.getId() + " - Player from: " + getName() + " - Message: " + envelop.getPayload());
+            log.info("Session id: [{}] Player to: [{}] Message: [{}]", session.getId(), getName(), envelop.getPayload());
             session.getAsyncRemote().sendObject(envelop, result -> {
-                if (result.getException() != null)
+                if (nonNull(result.getException()))
                     log.error("Unable to send message content to player " + getName(), result.getException());
             });
         }
