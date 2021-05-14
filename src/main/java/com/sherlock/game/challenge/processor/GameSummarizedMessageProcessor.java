@@ -39,12 +39,8 @@ public class GameSummarizedMessageProcessor implements ChallengeMessageProcessor
 
         ChallengeSummary summary = room.getSummary();
         summary.addScoreSummary(getScoreSummaryBy(player));
-
-        if (player.hasNotFinishedGame()) room.broadcast(INFO, PLAYER_LEFT, player);
-        if (room.hasNotFinished()) return null;
-
         challengeSummaryRepository.save(summary);
-        return room.broadcast(INFO, GAME_SUMMARIZED, summary);
+        return room.broadcast(INFO, PLAYER_LEFT, player);
     }
 
     private ScoreSummary getScoreSummaryBy(Player player) {

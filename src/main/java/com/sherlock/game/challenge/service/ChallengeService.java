@@ -21,5 +21,5 @@ public interface ChallengeService {
 
     Envelop processMessage(Credentials credentials, Envelop message);
 
-    Envelop summarize(Credentials credentials);
+    void summarize(Credentials credentials);
 }

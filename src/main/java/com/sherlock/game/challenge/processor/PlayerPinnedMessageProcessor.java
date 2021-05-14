@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sherlock.game.challenge.domain.ChallengeRoom;
 import com.sherlock.game.challenge.domain.MessageRequest;
+import com.sherlock.game.challenge.service.ChallengeTimerControl;
 import com.sherlock.game.core.domain.Marker;
 import com.sherlock.game.core.domain.MarkerPin;
 import com.sherlock.game.core.domain.Player;
@@ -42,6 +43,7 @@ public class PlayerPinnedMessageProcessor implements ChallengeMessageProcessor {
     private static final int SCORE_360M_LIMIT = 70;
 
     private final ObjectMapper mapper;
+    private final ChallengeTimerControl challengeTimerControl;
 
     @Override
     public Subject getSubject() {
@@ -63,16 +65,18 @@ public class PlayerPinnedMessageProcessor implements ChallengeMessageProcessor {
                 .distance(markerPinned.getDistance())
                 .scoreValue(getScoreByDistance(markerPinned.getDistance()))
                 .build();
-
         player.addScore(score);
+        Envelop message = player.send(SYSTEM, PLAYER_PINNED, score, mapper);
+
         player.setFinishedGame(room.getGameConfig().getMarkersAmount() == player.getScores().size());
         if (player.hasFinishedGame()) {
-            room.broadcast(SYSTEM, GAME_FINISHED, player);
-            return player.send(SYSTEM, GAME_FINISHED, score, mapper);
+            room.broadcast(INFO, GAME_FINISHED, player);
+            if (room.hasAllPlayersFinished()) challengeTimerControl.processGameOver(room);
+            return message;
         }
 
         room.broadcast(INFO, PLAYER_PINNED, player);
-        return player.send(SYSTEM, PLAYER_PINNED, score, mapper);
+        return message;
     }
 
     private Marker getMarkerBy(UUID id, ChallengeRoom room) {

@@ -19,7 +19,5 @@ public class ChallengeRoomTest {
                 .gameId(gameId)
                 .gameConfig(config)
                 .build();
-
-        room.triggerTimer();
     }
 }

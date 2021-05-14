@@ -51,6 +51,12 @@ public class Player {
 
     @JsonIgnore
     @Transient
+    public Boolean isOffline() {
+        return !getOnline();
+    }
+
+    @JsonIgnore
+    @Transient
     public Envelop send(Envelop envelop) {
 
         if (getOnline()) {
@@ -78,6 +84,12 @@ public class Player {
     public void addScore(Score score) {
         if (isNull(scores)) scores = new ArrayList<>();
         scores.add(score);
+    }
+
+    @JsonIgnore
+    @Transient
+    public int getScoresAmount() {
+        return nonNull(scores) ? scores.size() : 0;
     }
 
     @JsonIgnore
