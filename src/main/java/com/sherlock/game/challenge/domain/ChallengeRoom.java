@@ -22,13 +22,11 @@ import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.websocket.Session;
-import java.io.IOException;
 import java.util.*;
 
-import static com.sherlock.game.core.domain.message.Subject.GAME_FINISHED;
-import static com.sherlock.game.core.domain.message.Type.INFO;
 import static com.sherlock.game.support.GameMessageLog.messageTo;
 import static java.util.Collections.emptyList;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 @Slf4j
@@ -88,6 +86,12 @@ public class ChallengeRoom {
         return !hasStarted();
     }
 
+    @JsonIgnore
+    public void gameOver() {
+        if (hasFinished()) return;
+        log.debug("Game Id {} has finished", gameId);
+        setFinished(true);
+    }
 
     @Transient
     @JsonIgnore
@@ -97,8 +101,8 @@ public class ChallengeRoom {
 
     @Transient
     @JsonIgnore
-    public boolean hasNotFinished() {
-        return !hasFinished();
+    public boolean hasAllPlayersFinished() {
+        return getPlayers().stream().noneMatch(Player::hasNotFinishedGame);
     }
 
     @Transient
@@ -134,40 +138,25 @@ public class ChallengeRoom {
     @Transient
     @JsonIgnore
     public ChallengeSummary getSummary() {
-
-        return Optional.ofNullable(summary).orElse(
-                ChallengeSummary.builder()
-                        .gameId(gameId)
-                        .gameConfig(gameConfig)
-                        .rankedList(new TreeSet<>(Comparator.comparing(ScoreSummary::getTotalScore)))
-                        .build());
+        if (isNull(summary)) summary = ChallengeSummary.builder()
+                .gameId(gameId)
+                .gameConfig(gameConfig)
+                .rankedList(new TreeSet<>(Comparator.comparing(ScoreSummary::getTotalScore)))
+                .build();
+        return summary;
     }
 
-    public void triggerTimer() {
-        log.debug("Game Id {} has started", gameId);
-
-        TimerTask task = new TimerTask() {
-            public void run() {
-                triggerTimeout();
-            }
-        };
-        Timer timer = new Timer("Timer-" + gameId);
-        long delay = getGameConfig().getTimerInSeconds() * 1000L;
-        timer.schedule(task, delay);
+    @Transient
+    @JsonIgnore
+    public boolean hasSummarizedGame() {
+        int playersAmount = getPlayers().size();
+        int summarizedAmount = getSummary().getRankedList().size();
+        return summarizedAmount == playersAmount;
     }
 
-    public void triggerTimeout() {
-        log.debug("Game Id {} has finished", gameId);
-
-        broadcast(INFO, GAME_FINISHED);
-        setFinished(true);
-        getPlayers().forEach(player -> {
-            try {
-                log.trace("Closing session to player {}", player.getName());
-                player.getSession().close();
-            } catch (IOException e) {
-                log.error("Error to finish session to user: " + player.getName(), e);
-            }
-        });
+    @Transient
+    @JsonIgnore
+    public boolean hasNotSummarizedGame() {
+        return !hasSummarizedGame();
     }
 }

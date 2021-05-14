@@ -13,8 +13,10 @@ import org.springframework.data.annotation.Transient;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 @Data
 @Builder
@@ -32,7 +34,7 @@ public class ChallengeSummary {
     @Id
     private String gameId;
     private ChallengeConfig gameConfig;
-    private SortedSet<ScoreSummary> rankedList;
+    private SortedSet<ScoreSummary> rankedList = new TreeSet<>(Comparator.comparing(ScoreSummary::getTotalScore));
 
     @JsonIgnore
     @Transient
