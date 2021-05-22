@@ -147,7 +147,7 @@ public class ChallengeServiceImpl implements ChallengeService {
         Assert.notNull(credentials.getGameId(), "Game id is required");
         Assert.notNull(credentials.getPlayerName(), "Player name is required");
         Assert.notNull(credentials.getSession(), "Player session is required");
-        Assert.isTrue(credentials.getPlayerName().matches("^[\\w\\-_\\s]+$"), "Player name should be alphanumeric");
+        //Assert.isTrue(credentials.getPlayerName().matches("^[\\w\\-_\\s]+$"), "Player name should be alphanumeric");
     }
 
     private void validateMessage(Envelop message) {
