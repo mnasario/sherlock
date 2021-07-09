@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sherlock.game.challenge.domain.ChallengeConfig;
 import com.sherlock.game.challenge.domain.ChallengeRoom;
 import com.sherlock.game.challenge.domain.MessageRequest;
+import com.sherlock.game.challenge.service.ChallengeTimerControl;
 import com.sherlock.game.core.domain.Marker;
 import com.sherlock.game.core.domain.MarkerPin;
 import com.sherlock.game.core.domain.Player;
@@ -28,8 +29,10 @@ import static com.sherlock.game.support.GameModelFactory.*;
 @RunWith(MockitoJUnitRunner.class)
 public class PlayerPinnedMessageProcessorTest {
 
+    @Mock
+    private ChallengeTimerControl challengeTimerControl;
     private final ObjectMapper mapper = buildMapper();
-    private final PlayerPinnedMessageProcessor processor = new PlayerPinnedMessageProcessor(mapper);
+    private final PlayerPinnedMessageProcessor processor = new PlayerPinnedMessageProcessor(mapper, challengeTimerControl);
     private final String gameId = "GAME_1";
     @Mock
     private Session sessionJoao;
