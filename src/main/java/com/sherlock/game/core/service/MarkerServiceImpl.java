@@ -1,6 +1,7 @@
 package com.sherlock.game.core.service;
 
 import com.sherlock.game.core.domain.Marker;
+import com.sherlock.game.core.exception.MarkerConflictException;
 import com.sherlock.game.core.exception.MarkerNotFoundException;
 import com.sherlock.game.core.repository.MarkerRepository;
 import lombok.AllArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.util.Collection;
 import java.util.UUID;
 
 import static com.sherlock.game.support.GameHandler.RANDOM;
@@ -29,7 +31,7 @@ public class MarkerServiceImpl implements MarkerService {
         Assert.notNull(marker.getDescription(), "Marker description is required");
         Assert.notNull(marker.getLatitude(), "Latitude is required");
         Assert.notNull(marker.getLongitude(), "Longitude is required");
-        Assert.isTrue(isNotMarkerExists(marker), "Marker is already exists");
+        Assert.isTrue(validateMarkerExists(marker), "Marker is already exists");
         marker.setId(UUID.randomUUID());
         return markerRepository.save(marker);
     }
@@ -51,11 +53,20 @@ public class MarkerServiceImpl implements MarkerService {
         return markers.get().findAny().orElseThrow(MarkerNotFoundException::new);
     }
 
-    private boolean isNotMarkerExists(Marker marker) {
+    @Override
+    public Collection<Marker> findAll() {
+        return markerRepository.findAll();
+    }
 
-        return !markerRepository.exists(Example.of(Marker.builder()
+    private boolean validateMarkerExists(Marker marker) {
+
+        if(markerRepository.exists(Example.of(Marker.builder()
                 .latitude(marker.getLatitude())
                 .longitude(marker.getLongitude())
-                .build()));
+                .build()))){
+            throw new MarkerConflictException();
+        }
+
+        return true;
     }
 }

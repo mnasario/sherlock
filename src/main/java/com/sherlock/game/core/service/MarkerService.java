@@ -2,6 +2,7 @@ package com.sherlock.game.core.service;
 
 import com.sherlock.game.core.domain.Marker;
 
+import java.util.Collection;
 import java.util.UUID;
 
 public interface MarkerService {
@@ -11,4 +12,6 @@ public interface MarkerService {
     void delete(UUID markerId);
 
     Marker getRandomMapPoint();
+
+    Collection<Marker> findAll();
 }
